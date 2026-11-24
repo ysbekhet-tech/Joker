@@ -117,7 +117,7 @@ function R(){save();const a=$('#app');
  <button class="opt ${S.m==1?'on':''}" data-act=m1>اللعب العادي<small>اسحب من الكومة أو خد الكارت المرمي، وكمّل الـ ١٤ كارت كلهم</small></button>
  <button class="opt ${S.m==2?'on':''}" data-act=m2>نوع الـ ٧٠<small>اسحب من الكومة لحد ما تنزّل ٧٠ نقطة (الجوكر بديل أي كارت)</small></button>
  <h3>عدد اللاعبين</h3><div class=row>${[2,3,4].map(n=>`<button class="opt ${S.n==n?'on':''}" data-act=p${n}>${n}</button>`).join('')}</div>
- <button data-act=go style="margin-top:12px;font-size:20px;padding:14px 44px">ابدأ اللعب</button></div>`;return}
+ <button data-act=go style="margin-top:12px;font-size:20px;padding:14px 44px">ابدأ اللعب</button><small style="opacity:.55">نسخة 7</small></div>`;return}
  const h=G.hands[0],k=Math.min(G.k,h.length),m=Math.max(k,h.length-k,2),cw=Math.min(58,Math.floor((innerWidth-16)/(.5*(m-1)+1))),my=G.turn==0&&G.win==null,top=G.pile[G.pile.length-1],an=G.anim;
  const no=G.n-1,cnt=Math.max(14,...G.hands.slice(1).map(x=>x.length)),ocw=Math.min(34,Math.floor(((innerWidth-16)/no-18)/(.38*(cnt-1)+1))),pc=[...G.sel].reduce((s,i)=>s+pts(C[i]),0),lay=G.m==2&&!G.laid[0].length&&my&&G.ph=='disc';
  a.innerHTML=`<div class=opps>${G.hands.slice(1).map((x,i)=>`<div class="opp ${G.turn==i+1?'act':''}" data-p="${i+1}"><div class=oh><span class=av>${['🤖','🧑‍🚀','🦊'][i]}</span><span>لاعب ${i+2} (${x.length})</span></div><div class=fan style="--cw:${ocw}px">${x.map(()=>'<div class="card back"></div>').join('')}</div>${G.laid[i+1].length?'<em>نزّل ✓</em>':''}</div>`).join('')}</div>
