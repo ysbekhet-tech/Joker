@@ -15,7 +15,12 @@ html,body{margin:0;height:100%;background:#06241b;color:#fff;font-family:Tahoma,
 @keyframes fly{from{transform:translate(var(--fx,0),var(--fy,-180px)) rotate(-18deg) scale(.7);opacity:0}to{transform:none;opacity:1}}
 .new{animation:fly .5s cubic-bezier(.2,.8,.2,1) backwards}
 .opps{display:flex;justify-content:space-around;padding:10px 0 4px}
-.opp{text-align:center;padding:6px 14px;border-radius:16px;background:#0004;transition:.3s;min-width:86px}
+.opp{text-align:center;padding:6px 8px 8px;border-radius:16px;background:#0004;transition:.3s}
+.oh{display:flex;align-items:center;gap:6px;justify-content:center;font-size:13px;margin-bottom:5px}.oh .av{font-size:22px}
+.fan{display:flex;direction:ltr;justify-content:center;min-height:calc(var(--cw)*1.4)}
+.fan .card{border-width:2px;border-radius:3px;box-shadow:0 1px 3px #000a}.fan .card+.card{margin-left:calc(var(--cw)*-.62)}
+.mid .card{--cw:62px}.empty{width:62px!important;height:87px!important}
+.menu{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:8px;z-index:20;padding:6px 12px;font-size:13px}
 .opp.act{box-shadow:0 0 0 2px #ffd54a,0 0 20px #ffd54a99;background:#0008}
 .av{font-size:30px}.opp small{display:block;opacity:.8}.opp em{display:block;color:#ffd54a;font-size:12px;font-style:normal}
 .mid{flex:1;display:flex;align-items:center;justify-content:center;gap:34px;position:relative}
@@ -26,7 +31,10 @@ html,body{margin:0;height:100%;background:#06241b;color:#fff;font-family:Tahoma,
 @keyframes pl{to{opacity:.25}}
 .msg{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:15px;color:#ffe9a6;padding:0 10px}
 .laid{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:4px}
-.hand{display:flex;direction:ltr;justify-content:center;padding:24px 0 8px}
+.hands{display:flex;flex-direction:column;gap:6px;padding:22px 0 4px}
+.hand{display:flex;direction:ltr;justify-content:center;min-height:calc(var(--cw)*1.4)}
+.hand .card{touch-action:none}
+.ghost{position:fixed;z-index:60;pointer-events:none;transform:scale(1.12) rotate(4deg);box-shadow:0 14px 26px #000b;margin:0!important;transition:none}
 .hand .card+.card{margin-left:calc(var(--cw)*-.5)}
 .btns{display:flex;gap:7px;justify-content:center;padding:4px 0 12px;flex-wrap:wrap}
 button{font:inherit;border:0;border-radius:12px;padding:11px 16px;font-weight:800;background:#ffd54a;color:#3a2a00;box-shadow:0 3px 0 #a7861f}
@@ -56,26 +64,37 @@ function part(h){if(!h.length)return 1;const f=h[0];if(f.j)return 0;const r=h.sl
 function greedy(h){let rest=[...h],out=[];for(;;){let best=null,bp=0;for(let k=3;k<=5;k++)for(const g of combos(rest,k))if(valid(g)){const p=g.reduce((a,c)=>a+pts(c),0);if(p>bp){bp=p;best=g}}
  if(!best)return out;out.push(...best);rest=rest.filter(c=>!best.includes(c))}}
 function use(c,h){if(c.j)return G.m==2?9:-9;let u=0;for(const o of h){if(o===c||o.j)continue;if(o.r==c.r&&o.s!=c.s)u+=2;else if(o.s==c.s){const d=Math.abs(o.r-c.r);if(d==1||d==12)u+=2;else if(d==2)u+=1}}return u}
-function start(){C=[];for(let k=0;k<2;k++)for(let s=0;s<4;s++)for(let r=1;r<=13;r++)C.push({s,r});C.push({j:1,s:1},{j:1,s:0});C.forEach((c,i)=>c.id=i);
- const d=sh([...C]);G={m:S.m,n:S.n,deck:d,pile:[],hands:[],laid:[],turn:0,ph:'draw',sel:new Set(),anim:{all:1},msg:'دورك: اسحب كارت من الكومة'};
+const mkC=()=>{const a=[];for(let k=0;k<2;k++)for(let s=0;s<4;s++)for(let r=1;r<=13;r++)a.push({s,r});a.push({j:1,s:1},{j:1,s:0});a.forEach((c,i)=>c.id=i);return a};
+const KEY='joker-save-v1';
+function save(){try{if(!G)return localStorage.removeItem(KEY);const f=a=>a.map(c=>c.id);localStorage.setItem(KEY,JSON.stringify({k:G.k,m:G.m,n:G.n,turn:G.turn,ph:G.ph,win:G.win,msg:G.msg,deck:f(G.deck),pile:f(G.pile),hands:G.hands.map(f),laid:G.laid.map(f)}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(!d)return;C=mkC();const g=a=>a.map(i=>C[i]);S.m=d.m;S.n=d.n;
+ G={k:d.k,m:d.m,n:d.n,turn:d.turn,ph:d.ph,win:d.win,msg:d.msg,deck:g(d.deck),pile:g(d.pile),hands:d.hands.map(g),laid:d.laid.map(g),sel:new Set(),anim:{}}}catch(e){G=null}}
+function resume(){if(!G||G.win!=null)return;if(G.turn<0)return void later(start,1200);if(G.turn>0)later(G.ph=='disc'?()=>botPlay(G.turn):bot,900)}
+function start(){T++;C=mkC();
+ const d=sh([...C]);G={k:7,m:S.m,n:S.n,deck:d,pile:[],hands:[],laid:[],turn:0,ph:'draw',sel:new Set(),anim:{all:1},msg:'دورك: اسحب كارت — وتقدر تسحب كروتك وترتبهم في صفين'};
  for(let i=0;i<S.n;i++){G.hands.push(d.splice(0,14));G.laid.push([])}G.hands[0].sort((a,b)=>key(a)-key(b));R()}
 function draw(p,src){
- const c=src=='deck'?G.deck.pop():G.pile.pop();G.hands[p].push(c);G.ph='disc';if(!p)G.anim.hand=c.id;
- G.msg=p?`لاعب ${p+1} ${src=='deck'?'سحب من الكومة':'خد الكارت المرمي'}`:(G.m==2&&!G.laid[0].length?'اختار أوراقك وانزل ٧٠ نقطة، أو ارمي كارت':'ارمي كارت');R()}
-function disc(p,c){const h=G.hands[p];h.splice(h.indexOf(c),1);G.pile.push(c);G.sel.clear();G.anim.pile=c.id;G.anim.from=p;
- if(part(srt(h))){G.win=p;return R()}
- if(!G.deck.length){G.msg='خلصت الكروت ومحدش كسب — جولة جديدة 🔄';G.turn=-1;R();return setTimeout(start,2200)}
- G.turn=(p+1)%G.n;G.ph='draw';G.msg=G.turn?`دور لاعب ${G.turn+1}...`:'دورك: اسحب كارت';R();if(G.turn)setTimeout(bot,900)}
-function bot(){if(G.win!=null)return;const p=G.turn,h=G.hands[p],t=G.pile[G.pile.length-1];
+ const c=src=='deck'?G.deck.pop():G.pile.pop();G.hands[p].push(c);G.ph='disc';if(!p)G.anim.hand=c.id;else G.fx={t:'draw',p,src,c};
+ G.msg=p?`لاعب ${p+1} ${src=='deck'?'سحب من الكومة':'خد الكارت المرمي'}`:(G.m==2&&!G.laid[0].length?'اختار أوراقك واضغط كشف (٧٠ نقطة)، أو ارمي كارت':'ارمي كارت، أو اضغط كشف لو ورقك مظبوط');R()}
+function disc(p,c){if(!G)return;const h=G.hands[p];rm(h,c);G.pile.push(c);G.sel.clear();G.anim.pile=p?-1:c.id;G.anim.from=p;if(p)G.fx={t:'disc',p,c};
+ const nm=c.j?'جوكر':RN[c.r]+SY[c.s],who=p?`لاعب ${p+1} رمى ${nm} — `:'';
+ if(p?part(srt(h)):!h.length){G.win=p;return R()}
+ if(!G.deck.length){G.msg='خلصت الكروت ومحدش كسب — جولة جديدة 🔄';G.turn=-1;R();return later(start,2200)}
+ G.turn=(p+1)%G.n;G.ph='draw';G.msg=who+(G.turn?`دور لاعب ${G.turn+1}...`:'دورك: اسحب كارت');R();if(G.turn)later(bot,900)}
+function bot(){if(!G||G.win!=null)return;const p=G.turn,h=G.hands[p],t=G.pile[G.pile.length-1];
  draw(p,t&&(G.m==1||G.laid[p].length)&&use(t,h)>=3?'pile':'deck');
- setTimeout(()=>{if(G.m==2&&!G.laid[p].length){const g=greedy(h);if(g.length&&g.length<h.length&&g.reduce((a,c)=>a+pts(c),0)>=70){g.forEach(c=>h.splice(h.indexOf(c),1));G.laid[p]=g;G.msg=`لاعب ${p+1} نزّل أوراقه ✅`;R()}}
+ later(()=>botPlay(p),950)}
+function botPlay(p){const h=G.hands[p];if(G.win!=null)return;if(G.m==2&&!G.laid[p].length){const g=greedy(h);if(g.length&&g.length<h.length&&g.reduce((a,c)=>a+pts(c),0)>=70){g.forEach(c=>h.splice(h.indexOf(c),1));G.laid[p]=g;G.msg=`لاعب ${p+1} نزّل أوراقه ✅`;R()}}
   let d=h.find((c,i)=>part(srt(h.filter((_,j)=>j!=i))));d=d||h.reduce((a,c)=>use(c,h)<use(a,h)||(use(c,h)==use(a,h)&&pts(c)>pts(a))?c:a);
-  setTimeout(()=>disc(p,d),650)},850)}
+  later(()=>disc(p,d),950)}
+let T=0;const later=(f,ms)=>{const t=T;setTimeout(()=>{if(t==T&&G)f()},ms)};
 const msg=t=>{G.msg=t;R()};
+const rm=(h,c)=>{const i=h.indexOf(c);h.splice(i,1);if(h===G.hands[0]&&i<G.k)G.k--};
 function act(a,t){
+ if(a=='menu'){if(G){G.confirm=1;R()}return}if(a=='no'){G.confirm=0;return R()}if(a=='quit'){T++;G=null;return R()}if(G&&G.confirm)return;
  if(a=='m1'||a=='m2'){S.m=+a[1];return R()}if(a[0]=='p'){S.n=+a[1];return R()}if(a=='go')return start();if(a=='again'){G=null;return R()}
  if(!G||G.win!=null)return;
- if(a=='sc'||a=='sr'){G.hands[0].sort((x,y)=>a=='sc'?key(x)-key(y):keyR(x)-keyR(y));return R()}
+ if(a=='sc'||a=='sr'){G.hands[0].sort((x,y)=>a=='sc'?key(x)-key(y):keyR(x)-keyR(y));G.k=Math.ceil(G.hands[0].length/2);return R()}
  if(a=='card'){const i=+t.dataset.id;G.sel.has(i)?G.sel.delete(i):G.sel.add(i);return R()}
  if(G.turn)return;
  if(a=='deck'&&G.ph=='draw')return draw(0,'deck');
@@ -83,29 +102,53 @@ function act(a,t){
  if(G.ph!='disc')return msg('اسحب كارت الأول');
  const sel=[...G.sel].map(i=>C[i]),h=G.hands[0];
  if(a=='disc'){if(sel.length!=1)return msg('اختار كارت واحد بس عشان ترميه');return disc(0,sel[0])}
- if(a=='lay'){const p=sel.reduce((s,c)=>s+pts(c),0);
+ if(a=='rev'&&!(G.m==2&&!G.laid[0].length)){
+  if(sel.length>1)return msg('اختار كارت واحد بس هو اللي هترميه وانت بتكشف');
+  const w=(sel.length?sel:h).find(c=>part(srt(h.filter(x=>x!==c))));
+  if(!w)return msg('الورق مش مظبوط — مينفعش تكشف');
+  rm(h,w);G.pile.push(w);G.sel.clear();G.win=0;G.anim.pile=w.id;G.anim.from=0;return R()}
+ if(a=='rev'){const p=sel.reduce((s,c)=>s+pts(c),0);
   if(sel.length>=h.length)return msg('لازم تسيب كارت على الأقل عشان ترميه');
   if(!part(srt(sel)))return msg('الكروت المختارة مش تسلسلات أو مجموعات صح');
   if(p<70)return msg(`المجموع ${p} — لازم ٧٠ على الأقل`);
-  sel.forEach(c=>h.splice(h.indexOf(c),1));G.laid[0]=sel;G.sel.clear();msg(`نزّلت ${p} نقطة ✅ دلوقتي ارمي كارت`)}}
-function R(){const a=$('#app');
+  sel.forEach(c=>rm(h,c));G.laid[0]=sel;G.sel.clear();msg(`نزّلت ${p} نقطة ✅ دلوقتي ارمي كارت`)}}
+function R(){save();const a=$('#app');
  if(!G){a.innerHTML=`<div class=setup><h1>جوكر</h1><h3>نوع اللعب</h3>
  <button class="opt ${S.m==1?'on':''}" data-act=m1>اللعب العادي<small>اسحب من الكومة أو خد الكارت المرمي، وكمّل الـ ١٤ كارت كلهم</small></button>
  <button class="opt ${S.m==2?'on':''}" data-act=m2>نوع الـ ٧٠<small>اسحب من الكومة لحد ما تنزّل ٧٠ نقطة (الجوكر بديل أي كارت)</small></button>
  <h3>عدد اللاعبين</h3><div class=row>${[2,3,4].map(n=>`<button class="opt ${S.n==n?'on':''}" data-act=p${n}>${n}</button>`).join('')}</div>
  <button data-act=go style="margin-top:12px;font-size:20px;padding:14px 44px">ابدأ اللعب</button></div>`;return}
- const h=G.hands[0],n=Math.max(h.length,2),cw=Math.min(60,Math.floor((innerWidth-16)/(.5*(n-1)+1))),my=G.turn==0&&G.win==null,top=G.pile[G.pile.length-1],an=G.anim;
- const pc=[...G.sel].reduce((s,i)=>s+pts(C[i]),0),lay=G.m==2&&!G.laid[0].length&&my&&G.ph=='disc';
- a.innerHTML=`<div class=opps>${G.hands.slice(1).map((x,i)=>`<div class="opp ${G.turn==i+1?'act':''}"><div class=av>${['🤖','🧑‍🚀','🦊'][i]}</div><small>لاعب ${i+2}</small><b>${x.length} كارت</b>${G.laid[i+1].length?'<em>نزّل ✓</em>':''}</div>`).join('')}</div>
+ const h=G.hands[0],k=Math.min(G.k,h.length),m=Math.max(k,h.length-k,2),cw=Math.min(58,Math.floor((innerWidth-16)/(.5*(m-1)+1))),my=G.turn==0&&G.win==null,top=G.pile[G.pile.length-1],an=G.anim;
+ const no=G.n-1,cnt=Math.max(14,...G.hands.slice(1).map(x=>x.length)),ocw=Math.min(34,Math.floor(((innerWidth-16)/no-18)/(.38*(cnt-1)+1))),pc=[...G.sel].reduce((s,i)=>s+pts(C[i]),0),lay=G.m==2&&!G.laid[0].length&&my&&G.ph=='disc';
+ a.innerHTML=`<div class=opps>${G.hands.slice(1).map((x,i)=>`<div class="opp ${G.turn==i+1?'act':''}" data-p="${i+1}"><div class=oh><span class=av>${['🤖','🧑‍🚀','🦊'][i]}</span><span>لاعب ${i+2} (${x.length})</span></div><div class=fan style="--cw:${ocw}px">${x.map(()=>'<div class="card back"></div>').join('')}</div>${G.laid[i+1].length?'<em>نزّل ✓</em>':''}</div>`).join('')}</div>
  <div class=mid><div class=pile data-act=deck>${my&&G.ph=='draw'?'<span class=hint></span>':''}<div class="card back"></div><small>${G.deck.length}</small></div>
  <div class=pile data-act=take>${my&&G.ph=='draw'&&top&&(G.m==1||G.laid[0].length)?'<span class=hint></span>':''}${top?ch(top,an.pile==top.id?'new':'',an.pile==top.id?`--fy:${an.from?-170:170}px`:''):'<div class=empty></div>'}<small>الأرض</small></div>
  <div class=msg>${G.msg}</div></div>
  <div class=laid>${G.laid[0].map(c=>ch(c,'','--cw:26px')).join('')}</div>
- <div class=hand style="--cw:${cw}px">${h.map((c,i)=>ch(c,(G.sel.has(c.id)?'sel ':'')+(an.all||an.hand==c.id?'new':''),an.all?`--fy:-260px;animation-delay:${i*45}ms`:'')).join('')}</div>
+ <div class=hands style="--cw:${cw}px">${[h.slice(0,k),h.slice(k)].map((rw,j)=>`<div class=hand data-row=${j}>${rw.map((c,i)=>ch(c,(G.sel.has(c.id)?'sel ':'')+(an.all||an.hand==c.id?'new':''),an.all?`--fy:-260px;animation-delay:${(i+j*k)*45}ms`:'')).join('')}</div>`).join('')}</div>
  <div class=btns><button class=s data-act=sc>ترتيب بالنوع</button><button class=s data-act=sr>ترتيب بالرقم</button>
- ${lay?`<button data-act=lay>انزل (${pc}/70)</button>`:''}<button data-act=disc ${my&&G.ph=='disc'?'':'disabled'}>ارمي</button></div>
- ${G.win!=null?`<div class=ov><div>${G.win==0?'كسبت! 🎉':G.win<0?'تعادل':`لاعب ${G.win+1} كسب`}</div><button data-act=again>العب تاني</button></div>`:''}`;
- G.anim={}}
-document.addEventListener('click',e=>{const t=e.target.closest('[data-act],.hand .card');if(t)act(t.dataset.act||'card',t)});
-R();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+ ${my&&G.ph=='disc'?`<button data-act=rev>كشف${lay?` (${pc}/70)`:''}</button>`:''}<button data-act=disc ${my&&G.ph=='disc'?'':'disabled'}>ارمي</button></div>
+ ${G.win!=null?`<div class=ov><div>${G.win==0?'كسبت! 🎉':G.win<0?'تعادل':`لاعب ${G.win+1} كسب`}</div><button data-act=again>العب تاني</button></div>`:''}${G.confirm?`<div class=ov><div style="font-size:22px">تنهي اللعبة وترجع للرئيسية؟</div><button data-act=quit>إنهاء اللعبة</button><button class=s data-act=no>كمّل</button></div>`:''}<button class="s menu" data-act=menu>✕ خروج</button>`;
+ G.anim={};const fx=G.fx;G.fx=null;if(fx)requestAnimationFrame(()=>doFx(fx))}
+function doFx(f){const q=s=>document.querySelector(s),opp=q(`.opp[data-p="${f.p}"] .fan`),dk=q('.pile[data-act=deck] .card'),tp=q('.pile[data-act=take] .card,.pile[data-act=take] .empty');
+ const d=f.t=='disc',a=d?opp:f.src=='deck'?dk:tp,b=d?tp:opp;if(!a||!b)return;
+ const A=a.getBoundingClientRect(),B=b.getBoundingClientRect(),w=46,hh=w*1.4,tmp=document.createElement('div');
+ tmp.innerHTML=d||f.src=='pile'?ch(f.c,'',`--cw:${w}px`):`<div class="card back" style="--cw:${w}px"></div>`;
+ const c=tmp.firstChild;Object.assign(c.style,{position:'fixed',left:0,top:0,zIndex:70,pointerEvents:'none',margin:0});document.body.appendChild(c);
+ if(d)tp.style.opacity=0;
+ const P1=`translate(${A.left+A.width/2-w/2}px,${A.top+A.height/2-hh/2}px)`,P2=`translate(${B.left+B.width/2-w/2}px,${B.top+B.height/2-hh/2}px)`;
+ c.animate([{transform:P1+' scale(.75) rotate(-12deg)'},{transform:P2+' scale(1) rotate(5deg)'}],{duration:560,easing:'cubic-bezier(.2,.8,.2,1)'}).onfinish=()=>{c.remove();if(d)tp.style.opacity=1}}
+let dg=null,skip=false;
+function drop(id,x,y){const h=G.hands[0],c=C[id],i=h.indexOf(c);if(i<0)return R();
+ const rows=[...document.querySelectorAll('.hand')];let r=0,b=1e9;rows.forEach((el,j)=>{const q=el.getBoundingClientRect(),d=Math.abs(y-(q.top+q.bottom)/2);if(d<b){b=d;r=j}});
+ const n=[...rows[r].querySelectorAll('.card')].filter(el=>+el.dataset.id!=id&&(q=>q.left+q.width/2<x)(el.getBoundingClientRect())).length;
+ h.splice(i,1);if(i<G.k)G.k--;h.splice(r?G.k+n:n,0,c);if(!r)G.k++;R()}
+document.addEventListener('pointerdown',e=>{const el=e.target.closest('.hand .card');if(!el||!G||G.win!=null)return;dg={el,id:+el.dataset.id,x:e.clientX,y:e.clientY,on:0}});
+document.addEventListener('pointermove',e=>{if(!dg)return;if(!dg.on){if(Math.hypot(e.clientX-dg.x,e.clientY-dg.y)<9)return;dg.on=1;const r=dg.el.getBoundingClientRect();
+ dg.g=dg.el.cloneNode(true);dg.g.classList.remove('sel','new');dg.g.classList.add('ghost');dg.g.style.setProperty('--cw',r.width+'px');dg.ox=r.width/2;dg.oy=r.height/2;document.body.appendChild(dg.g);dg.el.style.opacity=.25}
+ dg.g.style.left=e.clientX-dg.ox+'px';dg.g.style.top=e.clientY-dg.oy+'px'});
+const endDrag=(e,cancel)=>{if(!dg)return;const d=dg;dg=null;if(!d.on)return;d.g.remove();skip=true;setTimeout(()=>skip=false,60);cancel?R():drop(d.id,e.clientX,e.clientY)};
+document.addEventListener('pointerup',e=>endDrag(e));document.addEventListener('pointercancel',e=>endDrag(e,1));
+document.addEventListener('click',e=>{if(skip)return;const t=e.target.closest('[data-act],.hand .card');if(t)act(t.dataset.act||'card',t)});
+load();R();resume();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
